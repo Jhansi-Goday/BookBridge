@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userType, setUserType] = useState<UserType>(null);
 
-  // Check if user is already logged in (from local storage)
+  // Check if user is already logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('bookbridge_user');
     if (storedUser) {
@@ -37,24 +37,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Mock login function (in a real app, this would call an API)
   const login = async (email: string, password: string, userType: UserType): Promise<boolean> => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Get registered users
+      const users = JSON.parse(localStorage.getItem('bookbridge_users') || '[]');
       
-      // For demo purposes, automatically create a mock user
-      const user: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: email.split('@')[0],
-        email,
-        userType: userType,
-      };
+      // Find user with matching email and password
+      const user = users.find((u: User & { password: string }) => 
+        u.email === email && u.password === password && u.userType === userType
+      );
+
+      if (!user) {
+        throw new Error('Invalid credentials or user not found');
+      }
+
+      // Remove password before storing in state
+      const { password: _, ...userWithoutPassword } = user;
       
-      // Save to localStorage for persistence
-      localStorage.setItem('bookbridge_user', JSON.stringify(user));
-      
-      setCurrentUser(user);
+      localStorage.setItem('bookbridge_user', JSON.stringify(userWithoutPassword));
+      setCurrentUser(userWithoutPassword);
       setIsAuthenticated(true);
       setUserType(userType);
       
@@ -65,22 +66,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Mock signup function (in a real app, this would call an API)
   const signup = async (name: string, email: string, password: string, userType: UserType): Promise<boolean> => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Get existing users
+      const users = JSON.parse(localStorage.getItem('bookbridge_users') || '[]');
       
-      const user: User = {
+      // Check if user already exists
+      if (users.some((u: User) => u.email === email)) {
+        throw new Error('User already exists');
+      }
+
+      const newUser = {
         id: Math.random().toString(36).substr(2, 9),
         name,
         email,
-        userType: userType,
+        password, // In a real app, this would be hashed
+        userType,
+        phone: '',
+        location: '',
       };
-      
-      localStorage.setItem('bookbridge_user', JSON.stringify(user));
-      
-      setCurrentUser(user);
+
+      // Add to users list
+      users.push(newUser);
+      localStorage.setItem('bookbridge_users', JSON.stringify(users));
+
+      // Log user in
+      const { password: _, ...userWithoutPassword } = newUser;
+      localStorage.setItem('bookbridge_user', JSON.stringify(userWithoutPassword));
+      setCurrentUser(userWithoutPassword);
       setIsAuthenticated(true);
       setUserType(userType);
       
@@ -103,6 +116,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!currentUser) return false;
       
       const updatedUser = { ...currentUser, ...userData };
+      
+      // Update in users list
+      const users = JSON.parse(localStorage.getItem('bookbridge_users') || '[]');
+      const updatedUsers = users.map((u: User) => 
+        u.id === currentUser.id ? { ...u, ...userData } : u
+      );
+      localStorage.setItem('bookbridge_users', JSON.stringify(updatedUsers));
+      
+      // Update current user
       localStorage.setItem('bookbridge_user', JSON.stringify(updatedUser));
       setCurrentUser(updatedUser);
       return true;

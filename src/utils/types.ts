@@ -5,8 +5,8 @@ export interface User {
   name: string;
   email: string;
   userType: UserType;
-  location?: string;
-  phone?: string;
+  location: string;
+  phone: string;
   profileImage?: string;
 }
 
@@ -24,6 +24,8 @@ export interface Book {
   location: string;
   createdAt: string;
   receiverId?: string;
+  pdfUrl?: string;
+  isFree?: boolean;
 }
 
 export type BookCondition = 'new' | 'like-new' | 'good' | 'fair' | 'poor';
@@ -38,6 +40,10 @@ export interface BookRequest {
   status: RequestStatus;
   message?: string;
   createdAt: string;
+  receiverPhone?: string;
+  receiverLocation?: string;
+  donorPhone?: string;
+  donorLocation?: string;
 }
 
 export type RequestStatus = 'pending' | 'accepted' | 'rejected' | 'completed';
