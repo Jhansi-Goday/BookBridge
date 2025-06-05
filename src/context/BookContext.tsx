@@ -30,18 +30,160 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { currentUser } = useAuth();
 
-  // Load data from localStorage on mount
   useEffect(() => {
     const storedBooks = localStorage.getItem('bookbridge_books');
     const storedRequests = localStorage.getItem('bookbridge_requests');
     const storedNotifications = localStorage.getItem('bookbridge_notifications');
 
-    if (storedBooks) setBooks(JSON.parse(storedBooks));
+    if (storedBooks) {
+      const existingBooks = JSON.parse(storedBooks);
+      if (!existingBooks.some((book: Book) => book.isFree)) {
+        const freeBooks: Book[] = [
+          {
+            id: 'free-1',
+            title: 'Pride and Prejudice',
+            author: 'Jane Austen',
+            description: 'A classic novel of manners, marriage, and social status in early 19th-century England.',
+            coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+            category: 'Fiction',
+            condition: 'good',
+            donorId: 'system',
+            donorName: 'BookBridge Library',
+            status: 'available',
+            location: 'Digital',
+            createdAt: new Date().toISOString(),
+            pdfUrl: 'https://www.gutenberg.org/files/1342/1342-pdf.pdf',
+            isFree: true
+          },
+          {
+            id: 'free-2',
+            title: 'The Great Gatsby',
+            author: 'F. Scott Fitzgerald',
+            description: 'A story of decadence and excess, exploring the American Dream in the Jazz Age.',
+            coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+            category: 'Fiction',
+            condition: 'good',
+            donorId: 'system',
+            donorName: 'BookBridge Library',
+            status: 'available',
+            location: 'Digital',
+            createdAt: new Date().toISOString(),
+            pdfUrl: 'https://www.gutenberg.org/files/64317/64317-pdf.pdf',
+            isFree: true
+          },
+          {
+            id: 'free-3',
+            title: 'Frankenstein',
+            author: 'Mary Shelley',
+            description: 'A Gothic masterpiece about the perils of unchecked scientific ambition.',
+            coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+            category: 'Fiction',
+            condition: 'good',
+            donorId: 'system',
+            donorName: 'BookBridge Library',
+            status: 'available',
+            location: 'Digital',
+            createdAt: new Date().toISOString(),
+            pdfUrl: 'https://www.gutenberg.org/files/84/84-pdf.pdf',
+            isFree: true
+          },
+          {
+            id: 'free-4',
+            title: 'The Art of War',
+            author: 'Sun Tzu',
+            description: 'An ancient Chinese military treatise with enduring wisdom for strategy and leadership.',
+            coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+            category: 'Non-Fiction',
+            condition: 'good',
+            donorId: 'system',
+            donorName: 'BookBridge Library',
+            status: 'available',
+            location: 'Digital',
+            createdAt: new Date().toISOString(),
+            pdfUrl: 'https://www.gutenberg.org/files/132/132-pdf.pdf',
+            isFree: true
+          }
+        ];
+        setBooks([...existingBooks, ...freeBooks]);
+        localStorage.setItem('bookbridge_books', JSON.stringify([...existingBooks, ...freeBooks]));
+      } else {
+        setBooks(existingBooks);
+      }
+    } else {
+      const freeBooks = [
+        {
+          id: 'free-1',
+          title: 'Pride and Prejudice',
+          author: 'Jane Austen',
+          description: 'A classic novel of manners, marriage, and social status in early 19th-century England.',
+          coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+          category: 'Fiction',
+          condition: 'good',
+          donorId: 'system',
+          donorName: 'BookBridge Library',
+          status: 'available',
+          location: 'Digital',
+          createdAt: new Date().toISOString(),
+          pdfUrl: 'https://www.gutenberg.org/files/1342/1342-pdf.pdf',
+          isFree: true
+        },
+        {
+          id: 'free-2',
+          title: 'The Great Gatsby',
+          author: 'F. Scott Fitzgerald',
+          description: 'A story of decadence and excess, exploring the American Dream in the Jazz Age.',
+          coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+          category: 'Fiction',
+          condition: 'good',
+          donorId: 'system',
+          donorName: 'BookBridge Library',
+          status: 'available',
+          location: 'Digital',
+          createdAt: new Date().toISOString(),
+          pdfUrl: 'https://www.gutenberg.org/files/64317/64317-pdf.pdf',
+          isFree: true
+        },
+        {
+          id: 'free-3',
+          title: 'Frankenstein',
+          author: 'Mary Shelley',
+          description: 'A Gothic masterpiece about the perils of unchecked scientific ambition.',
+          coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+          category: 'Fiction',
+          condition: 'good',
+          donorId: 'system',
+          donorName: 'BookBridge Library',
+          status: 'available',
+          location: 'Digital',
+          createdAt: new Date().toISOString(),
+          pdfUrl: 'https://www.gutenberg.org/files/84/84-pdf.pdf',
+          isFree: true
+        },
+        {
+          id: 'free-4',
+          title: 'The Art of War',
+          author: 'Sun Tzu',
+          description: 'An ancient Chinese military treatise with enduring wisdom for strategy and leadership.',
+          coverImage: 'https://images.pexels.com/photos/1907785/pexels-photo-1907785.jpeg',
+          category: 'Non-Fiction',
+          condition: 'good',
+          donorId: 'system',
+          donorName: 'BookBridge Library',
+          status: 'available',
+          location: 'Digital',
+          createdAt: new Date().toISOString(),
+          pdfUrl: 'https://www.gutenberg.org/files/132/132-pdf.pdf',
+          isFree: true
+        }
+      ];
+      setBooks(freeBooks);
+      localStorage.setItem('bookbridge_books', JSON.stringify(freeBooks));
+    }
+
     if (storedRequests) setRequests(JSON.parse(storedRequests));
     if (storedNotifications) setNotifications(JSON.parse(storedNotifications));
   }, []);
 
-  // Save data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('bookbridge_books', JSON.stringify(books));
   }, [books]);
@@ -54,7 +196,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('bookbridge_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  // Get books belonging to the current user
   const userBooks = currentUser 
     ? books.filter(book => 
         currentUser.userType === 'donor' 
@@ -63,7 +204,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       ) 
     : [];
 
-  // Add a new book
   const addBook = async (bookData: Omit<Book, 'id' | 'status' | 'createdAt' | 'donorId' | 'donorName'>): Promise<boolean> => {
     try {
       if (!currentUser) return false;
@@ -79,7 +219,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
 
       setBooks(prevBooks => [...prevBooks, newBook]);
       
-      // Create notification for donor
       addNotification(
         currentUser.id,
         `You've successfully added "${bookData.title}" to your donations.`,
@@ -93,7 +232,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update book status
   const updateBookStatus = async (bookId: string, status: Book['status'], receiverId?: string): Promise<boolean> => {
     try {
       setBooks(prevBooks => 
@@ -110,32 +248,30 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Request a book
   const requestBook = async (bookId: string, message?: string): Promise<boolean> => {
     try {
       if (!currentUser) return false;
 
-      // Find the book
       const book = books.find(b => b.id === bookId);
       if (!book) return false;
 
-      // Create a new request
       const newRequest: BookRequest = {
         id: Math.random().toString(36).substr(2, 9),
         bookId,
         receiverId: currentUser.id,
         receiverName: currentUser.name,
+        receiverPhone: currentUser.phone,
+        receiverLocation: currentUser.location,
         status: 'pending',
         message,
         createdAt: new Date().toISOString(),
       };
 
       setRequests(prevRequests => [...prevRequests, newRequest]);
+      localStorage.setItem('bookbridge_requests', JSON.stringify([...requests, newRequest]));
 
-      // Update book status to requested
       await updateBookStatus(bookId, 'requested');
 
-      // Create notifications for both donor and receiver
       addNotification(
         book.donorId,
         `${currentUser.name} has requested your book "${book.title}". Click to review the request.`,
@@ -155,36 +291,29 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Update request status
   const updateRequestStatus = async (requestId: string, status: BookRequest['status']): Promise<boolean> => {
     try {
-      // Find the request
       const request = requests.find(r => r.id === requestId);
       if (!request) return false;
 
-      // Find the book
       const book = books.find(b => b.id === request.bookId);
       if (!book) return false;
 
-      // Update request status
       setRequests(prevRequests => 
         prevRequests.map(req => 
           req.id === requestId ? { ...req, status } : req
         )
       );
 
-      // Update book status based on request status
       if (status === 'accepted') {
         await updateBookStatus(request.bookId, 'reserved', request.receiverId);
         
-        // Notify receiver
         addNotification(
           request.receiverId,
           `Good news! Your request for "${book.title}" has been accepted. Contact the donor to arrange pickup.`,
           `/receiver/dashboard`
         );
 
-        // Notify donor
         addNotification(
           book.donorId,
           `You've accepted the request for "${book.title}". Please arrange the handover with the receiver.`,
@@ -193,14 +322,12 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       } else if (status === 'rejected') {
         await updateBookStatus(request.bookId, 'available');
         
-        // Notify receiver
         addNotification(
           request.receiverId,
           `Your request for "${book.title}" was not accepted at this time.`,
           `/receiver/dashboard`
         );
 
-        // Notify donor
         addNotification(
           book.donorId,
           `You've declined the request for "${book.title}". The book is now available for others.`,
@@ -209,7 +336,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
       } else if (status === 'completed') {
         await updateBookStatus(request.bookId, 'donated', request.receiverId);
         
-        // Notify both parties
         addNotification(
           request.receiverId,
           `The book "${book.title}" has been marked as received. Happy reading!`,
@@ -230,7 +356,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Add notification
   const addNotification = (userId: string, message: string, linkTo?: string) => {
     const newNotification: Notification = {
       id: Math.random().toString(36).substr(2, 9),
@@ -244,7 +369,6 @@ export const BookProvider = ({ children }: { children: ReactNode }) => {
     setNotifications(prev => [newNotification, ...prev]);
   };
 
-  // Mark notification as read
   const markNotificationAsRead = (notificationId: string) => {
     setNotifications(prevNotifications => 
       prevNotifications.map(notification => 
