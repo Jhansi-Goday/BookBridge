@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -178,6 +177,77 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
     setLoading(false);
   };
 
+  const handleCompleteExchange = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get the request details to find the book
+      const { data: request } = await supabase
+        .from('book_requests')
+        .select('book_id, books(title)')
+        .eq('id', requestId)
+        .single();
+
+      if (!request) {
+        toast({
+          title: "Error",
+          description: "Request not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update book status to 'donated' to remove it from available books
+      const { error: bookError } = await supabase
+        .from('books')
+        .update({ status: 'donated' })
+        .eq('id', request.book_id);
+
+      if (bookError) {
+        console.error('Error updating book status:', bookError);
+        throw bookError;
+      }
+
+      // Update request status to 'completed'
+      const { error: requestError } = await supabase
+        .from('book_requests')
+        .update({ status: 'completed' })
+        .eq('id', requestId);
+
+      if (requestError) {
+        console.error('Error updating request status:', requestError);
+        throw requestError;
+      }
+
+      // Update contact exchange status to 'completed'
+      const { error: exchangeError } = await supabase
+        .from('contact_exchanges')
+        .update({ status: 'completed' })
+        .eq('request_id', requestId);
+
+      if (exchangeError) {
+        console.error('Error updating exchange status:', exchangeError);
+        throw exchangeError;
+      }
+
+      toast({
+        title: "Exchange Completed!",
+        description: "The book has been successfully exchanged and removed from the platform.",
+      });
+
+      onExchangeComplete();
+      onClose();
+    } catch (error: any) {
+      console.error('Error completing exchange:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete exchange.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const hasSharedDetails = isDonor 
     ? exchangeStatus?.donor_phone 
     : exchangeStatus?.requester_phone;
@@ -186,36 +256,56 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
     ? exchangeStatus?.requester_phone 
     : exchangeStatus?.donor_phone;
 
+  const bothPartiesShared = exchangeStatus?.donor_phone && exchangeStatus?.requester_phone;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Share Contact Details</DialogTitle>
+          <DialogTitle>Exchange Contact Details</DialogTitle>
         </DialogHeader>
         
         {hasSharedDetails ? (
           <div className="space-y-4">
             <div className="flex items-center text-green-600">
               <CheckCircle className="h-5 w-5 mr-2" />
-              <span>You have already shared your contact details</span>
+              <span>You have shared your contact details</span>
             </div>
             
             {otherPartyShared ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Other Party's Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center">
-                    <Phone className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{isDonor ? exchangeStatus.requester_phone : exchangeStatus.donor_phone}</span>
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Other Party's Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2" />
+                      <span className="text-sm">{isDonor ? exchangeStatus.requester_phone : exchangeStatus.donor_phone}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      <span className="text-sm">{isDonor ? exchangeStatus.requester_address : exchangeStatus.donor_address}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {bothPartiesShared && exchangeStatus?.status !== 'completed' && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Both parties have shared contact details. Once you've completed the physical exchange, click the button below to mark this exchange as complete.
+                    </p>
+                    <Button 
+                      onClick={handleCompleteExchange}
+                      className="w-full"
+                      variant="default"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mark Exchange as Complete
+                    </Button>
                   </div>
-                  <div className="flex items-center">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{isDonor ? exchangeStatus.requester_address : exchangeStatus.donor_address}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Waiting for the other party to share their contact details...

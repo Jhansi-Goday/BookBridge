@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -298,51 +297,12 @@ export const MyRequests = () => {
     }
   };
 
-  const handleContactExchangeComplete = async (requestId: string, bookId: string) => {
-    try {
-      // Update book status to 'donated' to remove it from available books
-      const { error: bookError } = await supabase
-        .from('books')
-        .update({ status: 'donated' })
-        .eq('id', bookId);
-
-      if (bookError) throw bookError;
-
-      // Update request status to 'completed'
-      const { error: requestError } = await supabase
-        .from('book_requests')
-        .update({ status: 'completed' })
-        .eq('id', requestId);
-
-      if (requestError) throw requestError;
-
-      // Update local state
-      setReceivedRequests(prev => 
-        prev.map(req => 
-          req.id === requestId ? { ...req, status: 'completed' } : req
-        )
-      );
-
-      setSentRequests(prev => 
-        prev.map(req => 
-          req.id === requestId ? { ...req, status: 'completed' } : req
-        )
-      );
-
-      setContactExchangeRequestId(null);
-
-      toast({
-        title: "Contact information exchanged",
-        description: "The book has been marked as donated and removed from available listings.",
-      });
-    } catch (error: any) {
-      console.error('Error completing contact exchange:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+  const handleContactExchangeComplete = async () => {
+    // Refresh the requests to get updated status
+    if (user) {
+      await fetchRequests(user.id);
     }
+    setContactExchangeRequestId(null);
   };
 
   if (loading) {
@@ -372,206 +332,209 @@ export const MyRequests = () => {
   const pendingSentCount = sentRequests.filter(req => req.status === 'pending').length;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center">
-          <MessageSquare className="h-8 w-8 mr-2 text-primary" />
-          My Book Requests
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your book requests and donations.
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-primary text-primary-foreground py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center">
+              <MessageSquare className="h-10 w-10 mr-3" />
+              My Book Requests
+            </h1>
+            <p className="text-xl opacity-90">Manage Your Book Exchanges</p>
+            <p className="mt-2 opacity-75">Track requests you've sent and received for book exchanges</p>
+          </div>
+        </div>
+      </header>
 
-      <Tabs defaultValue="sent" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="sent">
-            Requests I Sent 
-            {sentRequests.length > 0 && ` (${sentRequests.length})`}
-            {pendingSentCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {pendingSentCount} pending
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="received">
-            Requests I Received 
-            {receivedRequests.length > 0 && ` (${receivedRequests.length})`}
-            {pendingReceivedCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {pendingReceivedCount} new
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="sent" className="space-y-4">
-          {sentRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No requests sent</h3>
-              <p className="text-muted-foreground">
-                You haven't sent any book requests yet. Browse available books to make your first request.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {sentRequests.map((request) => (
-                <Card key={request.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{request.books.title}</CardTitle>
-                        <div className="flex items-center text-muted-foreground mb-2">
-                          <User className="h-4 w-4 mr-1" />
-                          <span className="text-sm">by {request.books.author}</span>
-                          <span className="mx-2">•</span>
-                          <span className="text-sm">Donor: {request.donor_profile?.full_name || 'Anonymous'}</span>
+      <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="sent" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="sent">
+              Requests I Sent 
+              {sentRequests.length > 0 && ` (${sentRequests.length})`}
+              {pendingSentCount > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {pendingSentCount} pending
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="received">
+              Requests I Received 
+              {receivedRequests.length > 0 && ` (${receivedRequests.length})`}
+              {pendingReceivedCount > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {pendingReceivedCount} new
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="sent" className="space-y-4">
+            {sentRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No requests sent</h3>
+                <p className="text-muted-foreground">
+                  You haven't sent any book requests yet. Browse available books to make your first request.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {sentRequests.map((request) => (
+                  <Card key={request.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg mb-2">{request.books.title}</CardTitle>
+                          <div className="flex items-center text-muted-foreground mb-2">
+                            <User className="h-4 w-4 mr-1" />
+                            <span className="text-sm">by {request.books.author}</span>
+                            <span className="mx-2">•</span>
+                            <span className="text-sm">Donor: {request.donor_profile?.full_name || 'Anonymous'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{request.books.category}</Badge>
+                            <Badge variant="outline" className="capitalize">{request.books.condition}</Badge>
+                            {getStatusBadge(request.status)}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{request.books.category}</Badge>
-                          <Badge variant="outline" className="capitalize">{request.books.condition}</Badge>
-                          {getStatusBadge(request.status)}
-                        </div>
+                        {request.status !== 'completed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteRequest(request.id, true)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteRequest(request.id, true)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    {request.message && (
-                      <div className="bg-muted p-3 rounded mb-3">
-                        <p className="text-sm"><strong>Your message:</strong> {request.message}</p>
-                      </div>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      Requested on {new Date(request.created_at).toLocaleDateString()}
-                    </p>
-                    {request.status === 'accepted' && (
-                      <Button
-                        className="mt-3"
-                        onClick={() => setContactExchangeRequestId(request.id)}
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Exchange Contact Info
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="received" className="space-y-4">
-          {receivedRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <BookOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No requests received</h3>
-              <p className="text-muted-foreground">
-                You haven't received any requests for your donated books yet.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {receivedRequests.map((request) => (
-                <Card key={request.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg mb-2">{request.books.title}</CardTitle>
-                        <div className="flex items-center text-muted-foreground mb-2">
-                          <User className="h-4 w-4 mr-1" />
-                          <span className="text-sm">by {request.books.author}</span>
-                          <span className="mx-2">•</span>
-                          <span className="text-sm">Requested by: {request.requester_profile?.full_name || 'Anonymous'}</span>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {request.message && (
+                        <div className="bg-muted p-3 rounded mb-3">
+                          <p className="text-sm"><strong>Your message:</strong> {request.message}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{request.books.category}</Badge>
-                          <Badge variant="outline" className="capitalize">{request.books.condition}</Badge>
-                          {getStatusBadge(request.status)}
-                        </div>
-                      </div>
-                      {request.status === 'pending' && (
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        Requested on {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                      {request.status === 'accepted' && (
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteRequest(request.id, false)}
-                          className="text-red-600 hover:text-red-700"
+                          className="mt-3"
+                          onClick={() => setContactExchangeRequestId(request.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Phone className="h-4 w-4 mr-2" />
+                          Exchange Contact Info
                         </Button>
                       )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    {request.message && (
-                      <div className="bg-muted p-3 rounded mb-3">
-                        <p className="text-sm"><strong>Message from requester:</strong> {request.message}</p>
-                      </div>
-                    )}
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Requested on {new Date(request.created_at).toLocaleDateString()}
-                    </p>
-                    
-                    {request.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleAcceptRequest(request.id, request.books.title, request.requester_id)}
-                          size="sm"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Accept
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleRejectRequest(request.id, request.books.title, request.requester_id)}
-                          size="sm"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
-                    
-                    {request.status === 'accepted' && (
-                      <Button
-                        onClick={() => setContactExchangeRequestId(request.id)}
-                        size="sm"
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Exchange Contact Info
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-      {/* Contact Exchange Modal */}
-      {contactExchangeRequestId && (
-        <ContactExchange
-          requestId={contactExchangeRequestId}
-          isOpen={true}
-          onClose={() => setContactExchangeRequestId(null)}
-          isDonor={receivedRequests.some(req => req.id === contactExchangeRequestId)}
-          onExchangeComplete={() => {
-            const request = [...sentRequests, ...receivedRequests].find(req => req.id === contactExchangeRequestId);
-            if (request) {
-              handleContactExchangeComplete(contactExchangeRequestId, request.book_id);
-            }
-          }}
-        />
-      )}
+          <TabsContent value="received" className="space-y-4">
+            {receivedRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No requests received</h3>
+                <p className="text-muted-foreground">
+                  You haven't received any requests for your donated books yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {receivedRequests.map((request) => (
+                  <Card key={request.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg mb-2">{request.books.title}</CardTitle>
+                          <div className="flex items-center text-muted-foreground mb-2">
+                            <User className="h-4 w-4 mr-1" />
+                            <span className="text-sm">by {request.books.author}</span>
+                            <span className="mx-2">•</span>
+                            <span className="text-sm">Requested by: {request.requester_profile?.full_name || 'Anonymous'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{request.books.category}</Badge>
+                            <Badge variant="outline" className="capitalize">{request.books.condition}</Badge>
+                            {getStatusBadge(request.status)}
+                          </div>
+                        </div>
+                        {request.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteRequest(request.id, false)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {request.message && (
+                        <div className="bg-muted p-3 rounded mb-3">
+                          <p className="text-sm"><strong>Message from requester:</strong> {request.message}</p>
+                        </div>
+                      )}
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Requested on {new Date(request.created_at).toLocaleDateString()}
+                      </p>
+                      
+                      {request.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleAcceptRequest(request.id, request.books.title, request.requester_id)}
+                            size="sm"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Accept
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => handleRejectRequest(request.id, request.books.title, request.requester_id)}
+                            size="sm"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {request.status === 'accepted' && (
+                        <Button
+                          onClick={() => setContactExchangeRequestId(request.id)}
+                          size="sm"
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Exchange Contact Info
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Contact Exchange Modal */}
+        {contactExchangeRequestId && (
+          <ContactExchange
+            requestId={contactExchangeRequestId}
+            isOpen={true}
+            onClose={() => setContactExchangeRequestId(null)}
+            isDonor={receivedRequests.some(req => req.id === contactExchangeRequestId)}
+            onExchangeComplete={handleContactExchangeComplete}
+          />
+        )}
+      </div>
     </div>
   );
 };
