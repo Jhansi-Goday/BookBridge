@@ -68,6 +68,8 @@ export const BrowseBooks = () => {
 
       if (booksError) throw booksError;
 
+      console.log('Fetched books:', booksData);
+
       const donorIds = [...new Set(booksData?.map(book => book.donorid).filter(Boolean))];
       
       let profilesData: any[] = [];

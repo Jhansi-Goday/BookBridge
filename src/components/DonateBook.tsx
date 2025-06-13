@@ -121,6 +121,8 @@ export const DonateBook = () => {
         return;
       }
 
+      console.log('Book inserted successfully:', insertedBook);
+
       // Create notification for the donor
       try {
         await supabase.rpc('create_book_notification', {

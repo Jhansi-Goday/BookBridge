@@ -198,6 +198,8 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
         return;
       }
 
+      console.log('Completing exchange for book:', request.book_id);
+
       // Update book status to 'donated' to remove it from available books
       const { error: bookError } = await supabase
         .from('books')
@@ -208,6 +210,8 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
         console.error('Error updating book status:', bookError);
         throw bookError;
       }
+
+      console.log('Book status updated to donated');
 
       // Update request status to 'completed'
       const { error: requestError } = await supabase
@@ -220,6 +224,8 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
         throw requestError;
       }
 
+      console.log('Request status updated to completed');
+
       // Update contact exchange status to 'completed'
       const { error: exchangeError } = await supabase
         .from('contact_exchanges')
@@ -230,6 +236,8 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
         console.error('Error updating exchange status:', exchangeError);
         throw exchangeError;
       }
+
+      console.log('Exchange status updated to completed');
 
       toast({
         title: "Exchange Completed!",
@@ -293,7 +301,7 @@ export const ContactExchange: React.FC<ContactExchangeProps> = ({
                 {bothPartiesShared && exchangeStatus?.status !== 'completed' && (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Both parties have shared contact details. Once you've completed the physical exchange, click the button below to mark this exchange as complete.
+                      Both parties have shared contact details. Once you've completed the physical exchange, click the button below to mark this exchange as complete and remove the book from the platform.
                     </p>
                     <Button 
                       onClick={handleCompleteExchange}
